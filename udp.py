@@ -44,7 +44,7 @@ class UdpServer(object):
             print "****************************"
             print time.strftime("%Y-%m-%d %X",time.localtime(time.time()))
             print("[%s:%s] connect" % (remoteHost, remotePort))     # 接收客户端的ip, port
-            if udp_foward and len(recvData)>6:
+            if udp_foward and len(recvData)> 6:
                 showHex(recvData)
                 print "recvData     :", recvData
                 print "recvData(sub):", recvData[6:]

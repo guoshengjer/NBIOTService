@@ -1,21 +1,22 @@
+# -*- coding:utf8 -*-
 __author__ = 'Eric2'
 #!/usr/bin/env python
-# -*- coding:utf8 -*-
+
 
 class DoorLock:
     def __init__(self):
         '''
-        ³õÊ¼»¯ÃÅËøÀà
-        door_name£º      ÃÅËøÃû³Æ
-        door_code:      ÃÅËø±àÂë
-        door_battery:   ÃÅËøµçÁ¿
-        door_csq:       ÃÅËøĞÅºÅÇ¿¶È
-        door_fault:     ÃÅËø¹ÊÕÏ×´Ì¬
-        door_firmware:  ÃÅËø¹Ì¼ş°æ±¾
-        door_hdware:    ÃÅËøÓ²¼ş°æ±¾
-        door_status:    ÃÅËø¿ªËø×´Ì¬
-        door_temp:      ÃÅËøÎÂ¶È
-        door_event:     ÃÅËøÊÂ¼ş
+        åˆå§‹åŒ–é—¨é”ç±»
+        door_nameï¼š      é—¨é”åç§°
+        door_code:      é—¨é”ç¼–ç 
+        door_battery:   é—¨é”ç”µé‡
+        door_csq:       é—¨é”ä¿¡å·å¼ºåº¦
+        door_fault:     é—¨é”æ•…éšœçŠ¶æ€
+        door_firmware:  é—¨é”å›ºä»¶ç‰ˆæœ¬
+        door_hdware:    é—¨é”ç¡¬ä»¶ç‰ˆæœ¬
+        door_status:    é—¨é”å¼€é”çŠ¶æ€
+        door_temp:      é—¨é”æ¸©åº¦
+        door_event:     é—¨é”äº‹ä»¶
         :return:
         '''
         self.door_name = ''
@@ -28,6 +29,9 @@ class DoorLock:
         self.door_status = -1
         self.door_temp = -1
         self.door_event = -1
+        self.door_timestamp = -1
+        self.door_passwordmodifypackage = ''
+        self.door_configmodifypackage = ''
 
 
     def updateDoorInfo(self, door_info):
