@@ -41,6 +41,10 @@ class ReceiveUDPThread(threading.Thread):
         g_logger.info("建立UDP服务端")
         self.sock.bind(('', bindPort))
         g_logger.info("监听端口：%d", bindPort)
+        self.sock.setblocking(0)
+        # 非阻塞模式
+        self.sock.settimeout(1)
+        # 超时时间
         self.totalBuff = ''
 
     def run(self):
@@ -56,39 +60,47 @@ class ReceiveUDPThread(threading.Thread):
 
                 bThdRunFlag = False
                 continue
-            g_logger.debug("进入UDP服务端监听模式")
-            recvBuff, (remoteHost, remotePort) = self.sock.recvfrom(1024)
-            g_logger.info("UDP客户端IP：%s,端口：%s,接收到报文：%s", remoteHost, remotePort, recvBuff.encode('hex'))
-            self.totalBuff += recvBuff.encode('hex')
-            # arraybuff = self.totalBuff.split(0xab)
-            # 将接收的字符串分成多条报文
-            # 方式一：找到ab起始符，然后读取ab后两个字节的内容，得到字符长度，然后取相应的长度截断。如果字符不够，则保留到下次
-            while 1:
-                iPos = self.totalBuff.find('ab')
-                if iPos != -1 and iPos < len(self.totalBuff)/2 - 2:
-                    g_logger.debug("进入解析报文阶段")
-                    # 找到ab了，且能判断这条报文的字节大小
-                    iBuffLenth = int(self.totalBuff[iPos+2:iPos+6], 16) *2
-                    if iBuffLenth <= len(self.totalBuff):
-                        # totalbuff里还有别的报文数据
-                        buff = self.totalBuff[iPos:iBuffLenth]
-                        self.totalBuff = self.totalBuff[iBuffLenth+1:]
-                        g_logger.debug("报文：%s", buff)
-                        # 解析报文
-                        sendBuff = self.decodeBuff(buff)
-                        g_logger.debug("即将发送的报文：%s", sendBuff)
-                        # 发送回复报文
-                        hexBuff = sendBuff.decode('hex')
-                        sendBuffLen = self.sock.sendto(hexBuff, (remoteHost, remotePort))
-                        g_logger.info("发送报文字节：%s", sendBuffLen)
-                    else:
-                        break
-                elif iPos == -1:
+            try:
 
-                    self.totalBuff = ''
-                    break
-                else:
-                    self.totalBuff = self.totalBuff[iPos:]
+                g_logger.debug("UDP服务端接收消息")
+                recvBuff, (remoteHost, remotePort) = self.sock.recvfrom(1024)
+                g_logger.info("UDP客户端IP：%s,端口：%s,接收到报文：%s", remoteHost, remotePort, recvBuff.encode('hex'))
+                self.totalBuff += recvBuff.encode('hex')
+                # arraybuff = self.totalBuff.split(0xab)
+                # 将接收的字符串分成多条报文
+                # 方式一：找到ab起始符，然后读取ab后两个字节的内容，得到字符长度，然后取相应的长度截断。如果字符不够，则保留到下次
+                while 1:
+                    iPos = self.totalBuff.find('ab')
+                    if iPos != -1 and iPos < len(self.totalBuff)/2 - 2:
+                        g_logger.debug("进入解析报文阶段")
+                        # 找到ab了，且能判断这条报文的字节大小
+                        iBuffLenth = int(self.totalBuff[iPos+2:iPos+6], 16) * 2
+                        if iBuffLenth <= len(self.totalBuff):
+                            # totalbuff里还有别的报文数据
+                            buff = self.totalBuff[iPos:iBuffLenth]
+                            self.totalBuff = self.totalBuff[iBuffLenth:]
+                            g_logger.debug("报文：%s", buff)
+                            # 解析报文
+                            sendBuff = self.decodeBuff(buff)
+                            g_logger.debug("即将发送的报文：%s", sendBuff)
+                            # 发送回复报文
+                            hexBuff = sendBuff.decode('hex')
+                            sendBuffLen = self.sock.sendto(hexBuff, (remoteHost, remotePort))
+                            g_logger.info("发送报文字节：%s", sendBuffLen)
+                        else:
+                            break
+                    elif iPos == -1:
+
+                        self.totalBuff = ''
+                        break
+                    else:
+                        self.totalBuff = self.totalBuff[iPos:]
+            except socket.timeout:
+                # 接收超时，继续运行
+                g_logger.debug("UDP服务端接收超时")
+                continue
+            except Exception, ex:
+                g_logger.error(ex.message)
 
     def decodeBuff(self, buff):
         '''
@@ -224,39 +236,6 @@ class ReceiveUDPThread(threading.Thread):
             g_logger.warning("未找到指令类型的报文：%s", buff)
         return ""
 
-    '''
-    def decodeBuffByStr(self, buff):
-        iType = buff[5]
-        if iType == 0x31:
-            # 设备状态上报
-            dictDoorLock = {}
-            dictDoorLock["Version"] = buff[4]
-            dictDoorLock["Type"] = buff[5]
-            dictDoorLock["MessageID"] = buff[6:7]
-            dictDoorLock["DeviceID"] = buff[9:16]
-            dictDoorLock["Timestamp"] = buff[17:20]
-            dictDoorLock["Option"] = buff[21]
-            dictDoorLock["Battery"] = buff[22]
-            dictDoorLock["CSQ"] = buff[23]
-            dictDoorLock["Fault"] = buff[24]
-            dictDoorLock["Firmware"] = buff[25:26]
-            dictDoorLock["Status"] = buff[27]
-            dictDoorLock["Temp"] = buff[28]
-            dictDoorLock["Event"] = buff[29]
-            dictDoorLock["Index"] = buff[30]
-            dictDoorLock["Hdware"] = buff[31]
-            dictDoorLock["Sign"] = buff[32]
-            dictDoorLock["vBattery"] = buff[33]
-            print dictDoorLock
-            sendBuff = ''.join([0xab, 0x00, 0x21, dictDoorLock["Version"], 0x88,
-                               dictDoorLock["MessageID"], 0x00, dictDoorLock["DeviceID"],
-                               dictDoorLock["Timestamp"], 0,dictDoorLock["Type"], 0x00,
-                               0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,dictDoorLock["MessageID"]])
-            sendBuff += hex(crctest.crc8(sendBuff))
-            return sendBuff
-        return
-        '''
-
 if __name__ == "__main__":
     g_logger = LogHelper.LogHelper().logHelper
     evtWaitStop = threading.Event()
@@ -277,7 +256,7 @@ if __name__ == "__main__":
             else:
                 nLoadConfigTimer -= 1
 
-            time.sleep(10)
+            time.sleep(1)
 
     except KeyboardInterrupt:
 
