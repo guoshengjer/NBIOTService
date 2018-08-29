@@ -42,13 +42,13 @@ def crc8(buf):
     crc = 0
     for i in range(len(buf)):
         crc = crc8tab[(crc ^ ord(buf[i]))]
-    crc = hex(crc)[2:]
+    crc = hex(crc)[2:].zfill(2)
     return crc
 
 
 if __name__ == "__main__":
     # print crc8tab
-    strbuff = 'ab0021028800220086874403359155705b1f34fb003100000000000000000022'
+    strbuff = 'ab00310231002c0086940503000153205b716c2c00526300011500182100042c3c8000ffffffff088000000000000000'
     # hexbuff = strbuff.decode('hex')
     str_crc8 = crc8(strbuff)
     print str_crc8

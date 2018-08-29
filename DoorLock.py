@@ -32,7 +32,8 @@ class DoorLock:
         self.door_timestamp = -1
         self.door_passwordmodifypackage = ''
         self.door_configmodifypackage = ''
-
+        self.door_remoteopenpackage = ''
+        self.door_getconfigpackage = ''
 
     def updateDoorInfo(self, door_info):
         return True

@@ -1,0 +1,2 @@
+netstat -lnp|grep Port  查看端口被哪个进程占用
+ps 进程号	查看当前进程
